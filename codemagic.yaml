@@ -1,0 +1,159 @@
+workflows:
+  ios-simulator:
+    name: Strahalina iOS Simulator
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    working_directory: ios-app
+
+    environment:
+      groups:
+        - ios_test
+      xcode: latest
+
+    scripts:
+      - name: Install XcodeGen
+        script: |
+          brew install xcodegen
+
+      - name: Generate Xcode project
+        script: |
+          xcodegen generate --spec project.yml
+
+      - name: Build for iOS Simulator
+        script: |
+          xcodebuild build \
+            -project Strahalina.xcodeproj \
+            -scheme Strahalina \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$CM_BUILD_DIR/derived-data" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Launch app in cloud simulator
+        script: |
+          # NOTE: not deployed yet — this curl pre-warm and autologin
+          # step will fail until strahalina-backend actually exists on
+          # Render and IOS_TEST_EMAIL/IOS_TEST_PASSWORD (the ios_test env
+          # var group) point at a real seeded account there. Left in
+          # place, matching the other apps' proven pattern, for when
+          # deployment happens.
+          echo "Waking backend..."
+          curl -fsS --retry 10 --retry-delay 6 --max-time 90 \
+            https://strahalina-backend.onrender.com/health >/dev/null
+
+          DEVICE_ID=$(xcrun simctl list devices available -j | \
+            ruby -rjson -e '
+              data = JSON.parse(STDIN.read)
+              devices = data["devices"].values.flatten
+              iphone = devices.find { |d| d["name"].start_with?("iPhone") && d["isAvailable"] }
+              abort "No available iPhone simulator found" unless iphone
+              puts iphone["udid"]
+            ')
+
+          echo "Using simulator: $DEVICE_ID"
+
+          xcrun simctl boot "$DEVICE_ID" || true
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          sleep 5
+
+          APP_PATH="$CM_BUILD_DIR/derived-data/Build/Products/Debug-iphonesimulator/Strahalina.app"
+
+          xcrun simctl install "$DEVICE_ID" "$APP_PATH"
+
+          test -n "$IOS_TEST_EMAIL" || { echo "IOS_TEST_EMAIL is missing"; exit 1; }
+          test -n "$IOS_TEST_PASSWORD" || { echo "IOS_TEST_PASSWORD is missing"; exit 1; }
+
+          mkdir -p "$CM_BUILD_DIR/simulator-artifacts"
+          LOGFILE="$CM_BUILD_DIR/simulator-artifacts/app-console.log"
+
+          SIMCTL_CHILD_IOS_TEST_AUTOMATION="1" \
+          SIMCTL_CHILD_IOS_TEST_EMAIL="$IOS_TEST_EMAIL" \
+          SIMCTL_CHILD_IOS_TEST_PASSWORD="$IOS_TEST_PASSWORD" \
+            xcrun simctl launch --console-pty "$DEVICE_ID" com.strahalina.app \
+              > "$LOGFILE" 2>&1 &
+          LAUNCH_PID=$!
+
+          waited=0
+          until grep -q "IOS_TEST_APP_LAUNCHED" "$LOGFILE" 2>/dev/null; do
+            sleep 1
+            waited=$((waited + 1))
+            if [ "$waited" -ge 45 ]; then
+              echo "Timed out waiting for IOS_TEST_APP_LAUNCHED after ${waited}s"
+              break
+            fi
+          done
+
+          waited=0
+          until grep -qE "IOS_TEST_AUTOLOGIN_(SUCCESS|FAILED)" "$LOGFILE" 2>/dev/null; do
+            sleep 1
+            waited=$((waited + 1))
+            if [ "$waited" -ge 60 ]; then
+              echo "Timed out waiting for autologin result after ${waited}s"
+              break
+            fi
+          done
+
+          xcrun simctl io "$DEVICE_ID" screenshot \
+            "$CM_BUILD_DIR/simulator-artifacts/strahalina-launch.png"
+
+          kill "$LAUNCH_PID" 2>/dev/null || true
+          echo "--- app console log ---"
+          cat "$LOGFILE" || true
+
+    artifacts:
+      - $CM_BUILD_DIR/derived-data/Build/Products/Debug-iphonesimulator/Strahalina.app
+      - $CM_BUILD_DIR/simulator-artifacts/**
+      - /tmp/xcodebuild_logs/*.log
+
+  ios-device-unsigned:
+    name: Strahalina Device (unsigned, for sideloading)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    working_directory: ios-app
+
+    environment:
+      xcode: latest
+
+    scripts:
+      - name: Install XcodeGen
+        script: |
+          brew install xcodegen
+
+      - name: Generate Xcode project
+        script: |
+          xcodegen generate --spec project.yml
+
+      - name: Build for iOS device (unsigned)
+        script: |
+          xcodebuild build \
+            -project Strahalina.xcodeproj \
+            -scheme Strahalina \
+            -sdk iphoneos \
+            -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$CM_BUILD_DIR/derived-data" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+
+      - name: Package unsigned .ipa
+        script: |
+          APP_PATH="$CM_BUILD_DIR/derived-data/Build/Products/Debug-iphoneos/Strahalina.app"
+          PAYLOAD_DIR="$CM_BUILD_DIR/Payload"
+          mkdir -p "$PAYLOAD_DIR"
+          cp -R "$APP_PATH" "$PAYLOAD_DIR/"
+          cd "$CM_BUILD_DIR"
+          zip -r Strahalina-unsigned.ipa Payload
+
+    artifacts:
+      - $CM_BUILD_DIR/Strahalina-unsigned.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+# A signed ios-appstore workflow is intentionally not defined yet — this
+# is a first local pass. Add one (mirroring myemptycloset/Car Hopping's
+# working ios-appstore workflow) once the user greenlights App Store
+# Connect distribution.

@@ -1,0 +1,42 @@
+name: Strahalina
+
+options:
+  minimumXcodeGenVersion: 2.38.0
+
+settings:
+  base:
+    PRODUCT_NAME: Strahalina
+    PRODUCT_BUNDLE_IDENTIFIER: com.strahalina.app
+    SWIFT_VERSION: 5.9
+    IPHONEOS_DEPLOYMENT_TARGET: 16.0
+    # iPhone only ("1"): the UI is portrait-only and not designed for
+    # iPad/landscape, so we don't declare iPad support at all rather
+    # than adding orientation support the app doesn't have.
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: 0.1.0
+    CURRENT_PROJECT_VERSION: 1
+  configs:
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+
+configs:
+  Debug: debug
+  Release: release
+
+targets:
+  Strahalina:
+    type: application
+    platform: iOS
+    sources:
+      - path: Strahalina
+    settings:
+      base:
+        PRODUCT_NAME: Strahalina
+        PRODUCT_BUNDLE_IDENTIFIER: com.strahalina.app
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Strahalina/App/Info.plist
+      configs:
+        Debug:
+          CODE_SIGNING_ALLOWED: NO
+          CODE_SIGN_IDENTITY: ""

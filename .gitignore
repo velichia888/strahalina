@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+*.xcodeproj/
+.local-storage/
+DerivedData/
+.DS_Store

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	These five are normally auto-injected by Xcode when
+	GENERATE_INFOPLIST_FILE is YES. This project sets it to NO to use
+	this file completely unmanaged — see myemptycloset/Car Hopping's
+	identical Info.plist comment for why.
+	-->
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+
+	<key>CFBundleDisplayName</key>
+	<string>Strahalina</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UIRequiresFullScreen</key>
+	<true/>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Strahalina needs access to your photos so listings and updates can include real photos.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Strahalina needs camera access so you can take photos for listings and updates.</string>
+
+	<!--
+	App Transport Security: the backend runs on plain HTTP at
+	localhost:4003 for local/simulator development — iOS blocks
+	non-HTTPS traffic by default. Scoped to localhost only, matching
+	AppConfig.apiBaseURL. Not yet deployed to a real HTTPS backend (see
+	docs/DEVELOPMENT_PLAN.md) — swap this out once it is.
+	-->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<false/>
+			</dict>
+		</dict>
+	</dict>
+</dict>
+</plist>

@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserStatus {
+  active
+  suspended
+}
+
+enum ListingType {
+  property
+  investment
+}
+
+enum ListingStatus {
+  active
+  pending
+  sold
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String
+  displayName  String
+  status       UserStatus @default(active)
+  tokenVersion Int        @default(0)
+  /// Gates listing/update writes and the inquiry inbox
+  /// (backend/src/middleware/requireAdmin.ts). No signup path can set
+  /// this — only ever flipped by prisma/seed.ts's bootstrap, same
+  /// pattern as the other apps this session.
+  isAdmin      Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  inquiries Inquiry[]
+  updates   Update[]
+
+  @@map("users")
+}
+
+model Listing {
+  id          String        @id @default(uuid())
+  title       String
+  description String
+  type        ListingType
+  status      ListingStatus @default(active)
+  /// Whole-dollar price, stored as cents to avoid float rounding.
+  priceCents  Int
+  location    String
+  /// Couple-entered label/value pairs (e.g. "Cap rate" -> "6.2%").
+  /// Never computed or invented by the server — see docs/MVP_SCOPE.md.
+  keyFacts    Json          @default("[]")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  photos    ListingPhoto[]
+  inquiries Inquiry[]
+  updates   Update[]
+
+  @@map("listings")
+}
+
+model ListingPhoto {
+  id         String  @id @default(uuid())
+  listingId  String
+  listing    Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  storageKey String
+  order      Int     @default(0)
+
+  @@index([listingId])
+  @@map("listing_photos")
+}
+
+model Update {
+  id              String   @id @default(uuid())
+  authorId        String
+  author          User     @relation(fields: [authorId], references: [id])
+  body            String
+  photoStorageKey String?
+  listingId       String?
+  listing         Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("updates")
+}
+
+model Inquiry {
+  id          String    @id @default(uuid())
+  listingId   String
+  listing     Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId     String
+  buyer       User      @relation(fields: [buyerId], references: [id])
+  message     String
+  respondedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([listingId])
+  @@map("inquiries")
+}
