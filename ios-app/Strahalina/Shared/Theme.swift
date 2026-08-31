@@ -1,26 +1,30 @@
 import SwiftUI
 
-/// Elegant, understated real-estate palette — deep navy ink on a warm
-/// cream canvas with a muted gold accent. No real branding/photography
-/// yet (placeholder pass, per the established pattern for a first build
-/// of any of these apps) — the user supplies real branding later.
+/// Dark luxury real-estate palette — near-black canvas, warm gold accent,
+/// cream/white text — extracted from the user-supplied "The One
+/// Enterprises" / Muradyan Group Capital brand mockups (see
+/// ~/Desktop/apps/strahalina). Property photography reads best on a dark
+/// ground with a single warm accent color, matching those mockups'
+/// moody dusk/interior-lit property shots and gold CTA buttons.
 enum Theme {
-    static let canvas = Color(hex: "#FAF7F0")
-    static let surface = Color.white
-    static let ink = Color(hex: "#1B2430")
-    static let inkSoft = Color(hex: "#4B5563")
-    static let inkFaint = Color(hex: "#9CA3AF")
-    static let accent = Color(hex: "#B08D57")
-    static let borderSubtle = Color(hex: "#E5E0D5")
-    static let danger = Color(hex: "#B3261E")
-    static let dangerSoft = Color(hex: "#FBEAE9")
+    static let canvas = Color(hex: "#141210")
+    static let surface = Color(hex: "#1E1B17")
+    static let surfaceRaised = Color(hex: "#262219")
+    static let ink = Color(hex: "#F5F1E8")
+    static let inkSoft = Color(hex: "#ACA595")
+    static let inkFaint = Color(hex: "#726B5C")
+    static let accent = Color(hex: "#C9A876")
+    static let accentDeep = Color(hex: "#B08D57")
+    static let borderSubtle = Color(hex: "#332F27")
+    static let danger = Color(hex: "#E5675F")
+    static let dangerSoft = Color(hex: "#3A211E")
 
     static let primaryGradient = LinearGradient(
-        colors: [Color(hex: "#C9A96A"), Color(hex: "#B08D57")],
+        colors: [Color(hex: "#D8BC8C"), Color(hex: "#B08D57")],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
-    static let primaryShadow = Color(hex: "#B08D57").opacity(0.35)
+    static let primaryShadow = Color(hex: "#000000").opacity(0.4)
 
     static let cornerRadius: CGFloat = 16
     static let cornerRadiusSmall: CGFloat = 12
@@ -38,14 +42,20 @@ enum Theme {
             .system(size: size, design: .default)
         }
         static func headline(_ size: CGFloat) -> SwiftUI.Font {
-            .system(size: size, weight: .bold, design: .serif)
+            .system(size: size, weight: .bold, design: .default)
+        }
+        /// Small tracked-uppercase label ("PROPERTIES", "FOR BUYERS") —
+        /// pair with `.textCase(.uppercase)` and `.tracking(1.5)` at the
+        /// call site, matching the mockups' eyebrow-label treatment.
+        static func eyebrow(_ size: CGFloat = 12) -> SwiftUI.Font {
+            .system(size: size, weight: .semibold, design: .default)
         }
     }
 
     static func statusColor(for status: ListingStatus) -> Color {
         switch status {
-        case .active: return Color(hex: "#2E7D32")
-        case .pending: return Color(hex: "#B08D57")
+        case .active: return Color(hex: "#5FBF7A")
+        case .pending: return accent
         case .sold: return inkFaint
         }
     }

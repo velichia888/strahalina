@@ -10,7 +10,11 @@ struct PrimaryButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background(backgroundStyle)
-            .foregroundStyle(isDestructive ? .white : Theme.ink)
+            // Dark text on the gold fill, matching the mockups' CTA
+            // buttons ("SUBMIT INQUIRY", "SCHEDULE A TOUR") — Theme.ink
+            // is a light cream in this dark theme, so it would nearly
+            // vanish against gold.
+            .foregroundStyle(isDestructive ? .white : Theme.canvas)
             .clipShape(Capsule())
             .shadow(
                 color: (isDisabled || isDestructive) ? .clear : Theme.primaryShadow,
@@ -27,24 +31,6 @@ struct PrimaryButtonStyle: ButtonStyle {
         if isDisabled { return AnyShapeStyle(Theme.inkFaint) }
         if isDestructive { return AnyShapeStyle(Theme.danger) }
         return AnyShapeStyle(Theme.primaryGradient)
-    }
-}
-
-/// A dark ink-filled pill with cream text — used for a CTA that sits on
-/// top of a gold background (e.g. a hero banner), where the usual gold
-/// PrimaryButtonStyle would have no contrast against it.
-struct DarkButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(Theme.Font.body(15).weight(.semibold))
-            .padding(.horizontal, Theme.Spacing.lg)
-            .padding(.vertical, 12)
-            .background(Theme.ink)
-            .foregroundStyle(Theme.canvas)
-            .clipShape(Capsule())
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .opacity(configuration.isPressed ? 0.85 : 1)
-            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }
 }
 

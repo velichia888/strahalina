@@ -17,9 +17,15 @@ struct ComposeUpdateView: View {
         NavigationStack {
             VStack(spacing: Theme.Spacing.md) {
                 TextEditor(text: $body_)
+                    .scrollContentBackground(.hidden)
+                    .foregroundStyle(Theme.ink)
                     .frame(minHeight: 120)
                     .padding(Theme.Spacing.xs)
                     .background(Theme.surface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous)
+                            .stroke(Theme.borderSubtle, lineWidth: 1)
+                    )
                     .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous))
 
                 PhotosPicker(selection: $selectedItem, matching: .images) {
@@ -38,7 +44,7 @@ struct ComposeUpdateView: View {
                 Button {
                     submit()
                 } label: {
-                    if isSubmitting { InlineSpinner(tint: .white) } else { Text("Post Update") }
+                    if isSubmitting { InlineSpinner(tint: Theme.canvas) } else { Text("Post Update") }
                 }
                 .buttonStyle(PrimaryButtonStyle(isDisabled: body_.isEmpty))
                 .disabled(body_.isEmpty || isSubmitting)

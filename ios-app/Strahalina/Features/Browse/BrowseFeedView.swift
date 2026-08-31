@@ -32,21 +32,22 @@ struct BrowseFeedView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Properties & Investments")
-                .font(Theme.Font.headline(22))
+        VStack(alignment: .leading, spacing: 6) {
+            Text("PROPERTIES · CAPITAL · CONNECTIONS · LEGACY")
+                .font(Theme.Font.eyebrow(11))
+                .tracking(1.5)
+                .foregroundStyle(Theme.accent)
+            Text("Building wealth through real estate and relationships.")
+                .font(Theme.Font.headline(20))
                 .foregroundStyle(Theme.ink)
-            Text("Curated listings from Strahalina.")
-                .font(Theme.Font.body(13))
-                .foregroundStyle(Theme.inkSoft)
         }
     }
 
     private var filterRow: some View {
         HStack(spacing: Theme.Spacing.sm) {
             filterChip(title: "All", isSelected: typeFilter == nil) { typeFilter = nil }
-            filterChip(title: "Property", isSelected: typeFilter == .property) { typeFilter = .property }
-            filterChip(title: "Investment", isSelected: typeFilter == .investment) { typeFilter = .investment }
+            filterChip(title: "For Buyers", isSelected: typeFilter == .property) { typeFilter = .property }
+            filterChip(title: "For Investors", isSelected: typeFilter == .investment) { typeFilter = .investment }
         }
         .onChange(of: typeFilter) { _ in
             Task { await load() }
@@ -59,8 +60,11 @@ struct BrowseFeedView: View {
                 .font(Theme.Font.body(13).weight(.medium))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(isSelected ? Theme.ink : Theme.surface)
-                .foregroundStyle(isSelected ? Theme.canvas : Theme.ink)
+                .background(isSelected ? Theme.accent : Theme.surface)
+                .foregroundStyle(isSelected ? Theme.canvas : Theme.inkSoft)
+                .overlay(
+                    Capsule().stroke(isSelected ? Color.clear : Theme.borderSubtle, lineWidth: 1)
+                )
                 .clipShape(Capsule())
         }
     }

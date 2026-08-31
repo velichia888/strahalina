@@ -14,9 +14,16 @@ struct StrahalinaApp: App {
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
 
+        let tabItemAppearance = UITabBarItemAppearance()
+        tabItemAppearance.normal.iconColor = UIColor(Theme.inkFaint)
+        tabItemAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor(Theme.inkFaint)]
+        tabItemAppearance.selected.iconColor = UIColor(Theme.accent)
+        tabItemAppearance.selected.titleTextAttributes = [.foregroundColor: UIColor(Theme.accent)]
+
         let tabAppearance = UITabBarAppearance()
         tabAppearance.configureWithOpaqueBackground()
         tabAppearance.backgroundColor = UIColor(Theme.surface)
+        tabAppearance.stackedLayoutAppearance = tabItemAppearance
         UITabBar.appearance().standardAppearance = tabAppearance
         UITabBar.appearance().scrollEdgeAppearance = tabAppearance
     }
@@ -26,6 +33,11 @@ struct StrahalinaApp: App {
             RootView()
                 .environmentObject(session)
                 .tint(Theme.accent)
+                // The mockups are entirely dark-themed (near-black canvas,
+                // gold accent, cream text) — force dark system chrome
+                // (status bar text, keyboard, alerts) to match rather
+                // than following the device's own light/dark setting.
+                .preferredColorScheme(.dark)
                 .task {
                     await session.restoreSession()
 

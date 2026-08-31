@@ -26,8 +26,13 @@ struct AuthFlowView: View {
                 if isSignUp {
                     TextField("Name", text: $displayName)
                         .textContentType(.name)
+                        .foregroundStyle(Theme.ink)
                         .padding(Theme.Spacing.sm)
                         .background(Theme.surface)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous)
+                                .stroke(Theme.borderSubtle, lineWidth: 1)
+                        )
                         .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous))
                 }
 
@@ -35,14 +40,24 @@ struct AuthFlowView: View {
                     .textContentType(.emailAddress)
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
+                    .foregroundStyle(Theme.ink)
                     .padding(Theme.Spacing.sm)
                     .background(Theme.surface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous)
+                            .stroke(Theme.borderSubtle, lineWidth: 1)
+                    )
                     .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous))
 
                 SecureField("Password", text: $password)
                     .textContentType(isSignUp ? .newPassword : .password)
+                    .foregroundStyle(Theme.ink)
                     .padding(Theme.Spacing.sm)
                     .background(Theme.surface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous)
+                            .stroke(Theme.borderSubtle, lineWidth: 1)
+                    )
                     .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous))
 
                 if let error {
@@ -52,7 +67,7 @@ struct AuthFlowView: View {
                 Button {
                     submit()
                 } label: {
-                    if isSubmitting { InlineSpinner(tint: .white) } else { Text(isSignUp ? "Create Account" : "Sign In") }
+                    if isSubmitting { InlineSpinner(tint: Theme.canvas) } else { Text(isSignUp ? "Create Account" : "Sign In") }
                 }
                 .buttonStyle(PrimaryButtonStyle(isDisabled: !canSubmit))
                 .disabled(!canSubmit || isSubmitting)

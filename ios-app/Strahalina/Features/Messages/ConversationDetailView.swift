@@ -54,7 +54,10 @@ struct ConversationDetailView: View {
             if isMine { Spacer(minLength: 40) }
             Text(message.body)
                 .font(Theme.Font.body(14))
-                .foregroundStyle(isMine ? .white : Theme.ink)
+                // Dark text on the gold "mine" bubble — Theme.ink is a
+                // light cream in this dark theme, and white would have
+                // even less contrast against gold than against surface.
+                .foregroundStyle(isMine ? Theme.canvas : Theme.ink)
                 .padding(.horizontal, Theme.Spacing.sm)
                 .padding(.vertical, 8)
                 .background(isMine ? Theme.accent : Theme.surface)
@@ -66,8 +69,13 @@ struct ConversationDetailView: View {
     private var composer: some View {
         HStack(spacing: Theme.Spacing.xs) {
             TextField("Message…", text: $draft, axis: .vertical)
+                .foregroundStyle(Theme.ink)
                 .padding(Theme.Spacing.xs)
                 .background(Theme.surface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous)
+                        .stroke(Theme.borderSubtle, lineWidth: 1)
+                )
                 .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous))
 
             Button {

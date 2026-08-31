@@ -72,7 +72,7 @@ struct ListingDetailView: View {
                     .font(Theme.Font.body(14))
                     .foregroundStyle(Theme.inkSoft)
                 Text(listing.priceDisplay)
-                    .font(Theme.Font.body(20).weight(.semibold))
+                    .font(Theme.Font.body(22).weight(.bold))
                     .foregroundStyle(Theme.accent)
             }
 
@@ -93,7 +93,7 @@ struct ListingDetailView: View {
             // isn't a real action for them — the backend rejects an
             // admin trying to start a conversation (400).
             if session.currentUser?.isAdmin != true {
-                Button("Message About This Listing") {
+                Button("Request Details") {
                     if session.status == .authenticated {
                         showingCompose = true
                     } else {

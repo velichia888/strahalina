@@ -20,6 +20,9 @@ struct ProfileView: View {
                         Button("Change Password") { showingChangePassword = true }
                     }
                     Section {
+                        NavigationLink("About Strahalina") { AboutView() }
+                    }
+                    Section {
                         Button(role: .destructive) { session.logout() } label: { Text("Sign Out") }
                     }
                 } else {
@@ -28,6 +31,9 @@ struct ProfileView: View {
                             .font(Theme.Font.body(13))
                             .foregroundStyle(Theme.inkSoft)
                         Button("Sign In / Create Account") { showingAuth = true }
+                    }
+                    Section {
+                        NavigationLink("About Strahalina") { AboutView() }
                     }
                 }
             }
@@ -60,14 +66,24 @@ private struct ChangePasswordSheet: View {
                 } else {
                     SecureField("Current password", text: $currentPassword)
                         .textContentType(.password)
+                        .foregroundStyle(Theme.ink)
                         .padding(Theme.Spacing.sm)
                         .background(Theme.surface)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous)
+                                .stroke(Theme.borderSubtle, lineWidth: 1)
+                        )
                         .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous))
 
                     SecureField("New password (min 8 characters)", text: $newPassword)
                         .textContentType(.newPassword)
+                        .foregroundStyle(Theme.ink)
                         .padding(Theme.Spacing.sm)
                         .background(Theme.surface)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous)
+                                .stroke(Theme.borderSubtle, lineWidth: 1)
+                        )
                         .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous))
 
                     if let error {
@@ -77,7 +93,7 @@ private struct ChangePasswordSheet: View {
                     Button {
                         submit()
                     } label: {
-                        if isSubmitting { InlineSpinner(tint: .white) } else { Text("Update Password") }
+                        if isSubmitting { InlineSpinner(tint: Theme.canvas) } else { Text("Update Password") }
                     }
                     .buttonStyle(PrimaryButtonStyle(isDisabled: newPassword.count < 8))
                     .disabled(newPassword.count < 8 || isSubmitting)

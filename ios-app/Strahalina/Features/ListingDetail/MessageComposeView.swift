@@ -24,9 +24,15 @@ struct MessageComposeView: View {
                     .foregroundStyle(Theme.inkSoft)
 
                 TextEditor(text: $message)
+                    .scrollContentBackground(.hidden)
+                    .foregroundStyle(Theme.ink)
                     .frame(minHeight: 140)
                     .padding(Theme.Spacing.xs)
                     .background(Theme.surface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous)
+                            .stroke(Theme.borderSubtle, lineWidth: 1)
+                    )
                     .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous))
 
                 if let error {
@@ -36,7 +42,7 @@ struct MessageComposeView: View {
                 Button {
                     submit()
                 } label: {
-                    if isSubmitting { InlineSpinner(tint: .white) } else { Text("Send") }
+                    if isSubmitting { InlineSpinner(tint: Theme.canvas) } else { Text("Submit Inquiry") }
                 }
                 .buttonStyle(PrimaryButtonStyle(isDisabled: message.isEmpty))
                 .disabled(message.isEmpty || isSubmitting)
@@ -45,7 +51,7 @@ struct MessageComposeView: View {
             }
             .padding(Theme.Spacing.lg)
             .background(Theme.canvas.ignoresSafeArea())
-            .navigationTitle("Send a Message")
+            .navigationTitle("Inquiry")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

@@ -22,9 +22,12 @@ struct AdminListingsView: View {
                         List {
                             ForEach(listings) { listing in
                                 row(for: listing)
+                                    .listRowBackground(Theme.surface)
                             }
                         }
                         .listStyle(.plain)
+                        .scrollContentBackground(.hidden)
+                        .background(Theme.canvas)
                     }
                 }
             }

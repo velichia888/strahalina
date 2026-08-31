@@ -51,8 +51,11 @@ struct InboxView: View {
             } label: {
                 row(conversation)
             }
+            .listRowBackground(Theme.surface)
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Theme.canvas)
     }
 
     private func row(_ conversation: Conversation) -> some View {

@@ -21,10 +21,18 @@ struct ListingCardView: View {
                     .foregroundStyle(Theme.inkSoft)
                     .lineLimit(1)
                 Text(listing.priceDisplay)
-                    .font(Theme.Font.body(14).weight(.semibold))
+                    .font(Theme.Font.body(14).weight(.bold))
                     .foregroundStyle(Theme.accent)
             }
+            .padding(.horizontal, 2)
         }
+        .padding(Theme.Spacing.xs)
+        .background(Theme.surface)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                .stroke(Theme.borderSubtle, lineWidth: 1)
+        )
     }
 
     @ViewBuilder

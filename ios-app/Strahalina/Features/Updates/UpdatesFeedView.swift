@@ -19,8 +19,12 @@ struct UpdatesFeedView: View {
                     } else {
                         List(updates) { update in
                             UpdateRow(update: update)
+                                .listRowBackground(Theme.canvas)
+                                .listRowSeparator(.hidden)
                         }
                         .listStyle(.plain)
+                        .scrollContentBackground(.hidden)
+                        .background(Theme.canvas)
                     }
                 }
             }
@@ -61,12 +65,6 @@ private struct UpdateRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            Text(update.author.displayName)
-                .font(Theme.Font.body(12).weight(.semibold))
-                .foregroundStyle(Theme.accent)
-            Text(update.body)
-                .font(Theme.Font.body(15))
-                .foregroundStyle(Theme.ink)
             if let urlString = update.photoUrl, let url = URL(string: urlString) {
                 AsyncImage(url: url) { phase in
                     switch phase {
@@ -80,11 +78,25 @@ private struct UpdateRow: View {
                 .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous))
                 .clipped()
             }
+            Text(update.author.displayName)
+                .font(Theme.Font.eyebrow(11))
+                .tracking(1)
+                .foregroundStyle(Theme.accent)
+            Text(update.body)
+                .font(Theme.Font.body(15))
+                .foregroundStyle(Theme.ink)
             Text(update.createdAt, style: .relative)
                 .font(Theme.Font.body(11))
                 .foregroundStyle(Theme.inkFaint)
         }
-        .padding(.vertical, Theme.Spacing.xs)
+        .padding(Theme.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.surface)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                .stroke(Theme.borderSubtle, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
     }
 }
 
