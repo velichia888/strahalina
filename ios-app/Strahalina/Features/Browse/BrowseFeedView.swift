@@ -4,10 +4,20 @@ import SwiftUI
 /// for this first pass (price-range filtering exists server-side but
 /// isn't exposed in the UI yet).
 struct BrowseFeedView: View {
+    /// Presets the type filter when pushed from elsewhere (e.g. "For
+    /// Buyers" -> properties only). `nil` (the tab-root default) shows
+    /// the full "All" grid with the filter row visible.
+    var initialTypeFilter: ListingType?
+
     @EnvironmentObject private var session: SessionStore
 
     @State private var state: LoadState<[Listing]> = .loading
     @State private var typeFilter: ListingType?
+
+    init(initialTypeFilter: ListingType? = nil) {
+        self.initialTypeFilter = initialTypeFilter
+        _typeFilter = State(initialValue: initialTypeFilter)
+    }
 
     var body: some View {
         NavigationStack {
@@ -46,8 +56,8 @@ struct BrowseFeedView: View {
     private var filterRow: some View {
         HStack(spacing: Theme.Spacing.sm) {
             filterChip(title: "All", isSelected: typeFilter == nil) { typeFilter = nil }
-            filterChip(title: "For Buyers", isSelected: typeFilter == .property) { typeFilter = .property }
-            filterChip(title: "For Investors", isSelected: typeFilter == .investment) { typeFilter = .investment }
+            filterChip(title: "Properties", isSelected: typeFilter == .property) { typeFilter = .property }
+            filterChip(title: "Investments", isSelected: typeFilter == .investment) { typeFilter = .investment }
         }
         .onChange(of: typeFilter) { _ in
             Task { await load() }

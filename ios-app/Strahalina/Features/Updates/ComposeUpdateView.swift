@@ -2,12 +2,15 @@ import SwiftUI
 import PhotosUI
 
 struct ComposeUpdateView: View {
+    var defaultCategory: UpdateCategory = .general
     var onPosted: () -> Void
 
     @EnvironmentObject private var session: SessionStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var body_ = ""
+    @State private var category: UpdateCategory = .general
+    @State private var externalVideoUrl = ""
     @State private var selectedItem: PhotosPickerItem?
     @State private var imageData: Data?
     @State private var isSubmitting = false
@@ -16,6 +19,8 @@ struct ComposeUpdateView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: Theme.Spacing.md) {
+                categoryPicker
+
                 TextEditor(text: $body_)
                     .scrollContentBackground(.hidden)
                     .foregroundStyle(Theme.ink)
@@ -36,6 +41,10 @@ struct ComposeUpdateView: View {
                         imageData = try? await newItem?.loadTransferable(type: Data.self)
                     }
                 }
+
+                // Nod to "Content Hub" video framing — a real external
+                // link only, never a hosted video player.
+                FormTextField(placeholder: "Video link (optional, e.g. YouTube)", text: $externalVideoUrl, keyboardType: .URL)
 
                 if let error {
                     InlineErrorText(error: error)
@@ -60,6 +69,31 @@ struct ComposeUpdateView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
+            .onAppear { category = defaultCategory }
+        }
+    }
+
+    private var categoryPicker: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            ForEach(UpdateCategory.allCases, id: \.self) { option in
+                categoryChip(option)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func categoryChip(_ option: UpdateCategory) -> some View {
+        Button {
+            category = option
+        } label: {
+            Text(option.displayName)
+                .font(Theme.Font.body(12).weight(.medium))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(category == option ? Theme.accent : Theme.surface)
+                .foregroundStyle(category == option ? Theme.canvas : Theme.inkSoft)
+                .overlay(Capsule().stroke(category == option ? Color.clear : Theme.borderSubtle, lineWidth: 1))
+                .clipShape(Capsule())
         }
     }
 
@@ -72,6 +106,8 @@ struct ComposeUpdateView: View {
                 _ = try await session.apiClient.createUpdate(
                     body: body_,
                     listingId: nil,
+                    category: category,
+                    externalVideoUrl: externalVideoUrl,
                     imageData: imageData,
                     filename: imageData != nil ? "update.jpg" : nil,
                     mimeType: imageData != nil ? "image/jpeg" : nil

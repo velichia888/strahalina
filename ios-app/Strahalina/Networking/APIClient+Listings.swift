@@ -13,10 +13,10 @@ extension APIClient {
     /// Public — no auth required. `status` is left nil for the normal
     /// public browse (server defaults to active-only); the admin
     /// listings screen passes an explicit status to see pending/sold too.
-    func fetchListings(type: ListingType? = nil, status: ListingStatus? = nil) async throws -> [Listing] {
+    func fetchListings(type: ListingType? = nil, status: ListingStatus? = nil, location: String? = nil) async throws -> [Listing] {
         let response: ListingsResponse = try await send(Endpoint(
             "/listings",
-            query: ["type": type?.rawValue, "status": status?.rawValue],
+            query: ["type": type?.rawValue, "status": status?.rawValue, "location": location],
             requiresAuth: false
         ))
         return response.listings

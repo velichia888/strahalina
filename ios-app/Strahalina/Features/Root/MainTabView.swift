@@ -5,8 +5,11 @@ struct MainTabView: View {
 
     var body: some View {
         TabView {
+            HomeView()
+                .tabItem { Label("Home", systemImage: "house.fill") }
+
             BrowseFeedView()
-                .tabItem { Label("Browse", systemImage: "house") }
+                .tabItem { Label("Browse", systemImage: "square.grid.2x2") }
 
             UpdatesFeedView()
                 .tabItem { Label("Updates", systemImage: "megaphone") }

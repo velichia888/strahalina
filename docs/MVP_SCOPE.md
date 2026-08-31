@@ -50,6 +50,27 @@ anyone browsing. No fabricated engagement counters (likes/views) anywhere.
   the reply in the same thread. One conversation per (listing, buyer) pair. Any admin can
   reply to any conversation — listings aren't individually owned, so there's no
   per-listing "seller" to route messages to.
+- General (not listing-specific) conversations: "Book a Consultation" and "Investor
+  Inquiry" are real structured forms whose fields are composed into the opening message of
+  a general conversation (`Conversation.kind`, `listingId` nullable) — same real
+  Conversation/Message system, not a second data model. Each submission always starts a
+  fresh conversation (unlike the per-listing find-or-create), since each is its own
+  episodic ask.
+- Updates feed doubles as "Market Insights" and "Content Hub" from the fuller site
+  mockup, via a real `category` tag (general / market_insight / content) admins set when
+  posting — filterable tabs in the iOS feed, no separate fabricated content system, no
+  invented articles or hosted video (an update can carry an optional external video link,
+  e.g. YouTube, never a real video player).
+- "For Buyers" / "For Sellers" / "For Investors": static informational screens with real
+  service-description copy, each routing to a real destination (Buyers → Browse filtered
+  to properties; Sellers → Book a Consultation; Investors → Investor Inquiry).
+- A Home tab adapts the fuller mockup's single-page site structure natively: hero, real
+  listing previews (first few properties/investments, or a real empty state), the three
+  promo cards, an About preview, a Market Insights preview, and the Consultation CTA.
+- No hardcoded contact phone/email anywhere in the app — the mockup's example number
+  ("(480) 555-0123") is a placeholder ("555" prefix), and the specific example
+  listings/articles in the fuller mockup (e.g. "Paradise Valley Estate $8,950,000") are
+  mockup-tool placeholders, not real data — confirmed with the user, never hardcoded.
 - Backend deployed to Render; iOS built via Codemagic (simulator, then device-unsigned for
   Sideloadly).
 

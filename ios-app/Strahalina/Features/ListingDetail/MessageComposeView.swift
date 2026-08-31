@@ -7,14 +7,22 @@ import SwiftUI
 /// one-shot "inquiry" concept.
 struct MessageComposeView: View {
     let listing: Listing
+    var prefill: String = ""
     var onStarted: (Conversation) -> Void
 
     @EnvironmentObject private var session: SessionStore
     @Environment(\.dismiss) private var dismiss
 
-    @State private var message = ""
+    @State private var message: String
     @State private var isSubmitting = false
     @State private var error: Error?
+
+    init(listing: Listing, prefill: String = "", onStarted: @escaping (Conversation) -> Void) {
+        self.listing = listing
+        self.prefill = prefill
+        self.onStarted = onStarted
+        _message = State(initialValue: prefill)
+    }
 
     var body: some View {
         NavigationStack {
@@ -42,7 +50,7 @@ struct MessageComposeView: View {
                 Button {
                     submit()
                 } label: {
-                    if isSubmitting { InlineSpinner(tint: Theme.canvas) } else { Text("Submit Inquiry") }
+                    if isSubmitting { InlineSpinner(tint: Theme.canvas) } else { Text("Send Message") }
                 }
                 .buttonStyle(PrimaryButtonStyle(isDisabled: message.isEmpty))
                 .disabled(message.isEmpty || isSubmitting)
@@ -51,7 +59,7 @@ struct MessageComposeView: View {
             }
             .padding(Theme.Spacing.lg)
             .background(Theme.canvas.ignoresSafeArea())
-            .navigationTitle("Inquiry")
+            .navigationTitle("Message")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

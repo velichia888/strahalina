@@ -41,6 +41,54 @@ extension APIClient {
     func markConversationRead(conversationId: String) async throws {
         let _: EmptyOkResponse = try await send(Endpoint("/conversations/\(conversationId)/read", method: .post))
     }
+
+    /// "Book a Consultation" — composes the structured form fields into
+    /// the first message of a real, general (no listing) conversation.
+    func startConsultation(fullName: String, email: String, phone: String, message: String) async throws -> StartConversationResponse {
+        struct Body: Encodable {
+            let fullName: String
+            let email: String
+            let phone: String
+            let message: String
+        }
+        return try await send(Endpoint(
+            "/conversations/consultation",
+            method: .post,
+            body: Body(fullName: fullName, email: email, phone: phone, message: message)
+        ))
+    }
+
+    /// "Investor Inquiry" — same real conversation system, different
+    /// structured fields.
+    func startInvestorInquiry(
+        fullName: String,
+        email: String,
+        phone: String,
+        investmentRange: String,
+        preferredStrategy: String,
+        additionalInfo: String
+    ) async throws -> StartConversationResponse {
+        struct Body: Encodable {
+            let fullName: String
+            let email: String
+            let phone: String
+            let investmentRange: String
+            let preferredStrategy: String
+            let additionalInfo: String?
+        }
+        return try await send(Endpoint(
+            "/conversations/investor-inquiry",
+            method: .post,
+            body: Body(
+                fullName: fullName,
+                email: email,
+                phone: phone,
+                investmentRange: investmentRange,
+                preferredStrategy: preferredStrategy,
+                additionalInfo: additionalInfo.isEmpty ? nil : additionalInfo
+            )
+        ))
+    }
 }
 
 private struct EmptyOkResponse: Decodable {

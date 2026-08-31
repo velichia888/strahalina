@@ -24,6 +24,28 @@ enum ListingStatus {
   sold
 }
 
+/// general: a plain admin post (the original Updates feed).
+/// market_insight / content: same real Update row, just tagged so the
+/// iOS Updates feed can offer the mockup's "Market Insights" / "Content
+/// Hub" filter tabs without inventing a second content system or any
+/// fabricated articles/videos.
+enum UpdateCategory {
+  general
+  market_insight
+  content
+}
+
+/// listing: tied to one property/investment (the original flow).
+/// consultation / investor_inquiry: a general, not-listing-specific
+/// thread started from the mockup's "Book a Consultation" / "Investor
+/// Inquiry" forms — same real Conversation/Message system, just
+/// unattached to a listing and tagged so the UI can label it correctly.
+enum ConversationKind {
+  listing
+  consultation
+  investor_inquiry
+}
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -79,16 +101,22 @@ model ListingPhoto {
 }
 
 model Update {
-  id              String   @id @default(uuid())
+  id              String         @id @default(uuid())
   authorId        String
-  author          User     @relation(fields: [authorId], references: [id])
+  author          User           @relation(fields: [authorId], references: [id])
   body            String
   photoStorageKey String?
+  /// Optional external link (e.g. YouTube) for the mockup's "Content
+  /// Hub" video framing -- never a real hosted video, just a link the
+  /// admin attaches to a real post.
+  externalVideoUrl String?
+  category        UpdateCategory @default(general)
   listingId       String?
-  listing         Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
-  createdAt       DateTime @default(now())
+  listing         Listing?       @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  createdAt       DateTime       @default(now())
 
   @@index([createdAt])
+  @@index([category])
   @@map("updates")
 }
 
@@ -98,14 +126,23 @@ model Update {
 // individual user. So a Conversation has a specific buyer but no
 // specific "seller" — any admin can see and post to any conversation.
 // See requireAdminOrConversationBuyer in conversation.controller.ts.
+//
+// listingId is optional to support general "Book a Consultation" /
+// "Investor Inquiry" threads that aren't about one specific property
+// (kind = consultation / investor_inquiry). Postgres unique indexes
+// treat NULL as distinct from every other value, so
+// @@unique([listingId, buyerId]) still enforces "one thread per buyer
+// per listing" for kind = listing while placing no limit on how many
+// listingId = null (general) conversations a buyer can start.
 model Conversation {
-  id        String   @id @default(uuid())
-  listingId String
-  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  id        String           @id @default(uuid())
+  kind      ConversationKind @default(listing)
+  listingId String?
+  listing   Listing?         @relation(fields: [listingId], references: [id], onDelete: Cascade)
   buyerId   String
-  buyer     User     @relation(fields: [buyerId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  buyer     User             @relation(fields: [buyerId], references: [id])
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 
   messages Message[]
 

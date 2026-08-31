@@ -43,7 +43,7 @@ struct ConversationDetailView: View {
             composer
         }
         .background(Theme.canvas.ignoresSafeArea())
-        .navigationTitle(conversation.listing?.title ?? "Conversation")
+        .navigationTitle(conversation.displayTitle)
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
     }

@@ -7,6 +7,7 @@ struct ListingDetailView: View {
     @State private var state: LoadState<Listing> = .loading
     @State private var showingAuth = false
     @State private var showingCompose = false
+    @State private var composePrefill = ""
     @State private var startedConversation: Conversation?
 
     var body: some View {
@@ -28,7 +29,7 @@ struct ListingDetailView: View {
         }
         .sheet(isPresented: $showingCompose) {
             if case .loaded(let listing) = state {
-                MessageComposeView(listing: listing) { conversation in
+                MessageComposeView(listing: listing, prefill: composePrefill) { conversation in
                     startedConversation = conversation
                 }
                 .environmentObject(session)
@@ -93,14 +94,21 @@ struct ListingDetailView: View {
             // isn't a real action for them — the backend rejects an
             // admin trying to start a conversation (400).
             if session.currentUser?.isAdmin != true {
-                Button("Request Details") {
-                    if session.status == .authenticated {
-                        showingCompose = true
-                    } else {
-                        showingAuth = true
+                // Both CTAs open the same real message composer, just
+                // pre-filled with different intent — there's no separate
+                // "tour scheduling" system, this is still one real
+                // conversation with the couple.
+                HStack(spacing: Theme.Spacing.sm) {
+                    Button("Schedule a Tour") {
+                        requestMessage(prefill: "I'd like to schedule a tour of \(listing.title).")
                     }
+                    .buttonStyle(PrimaryButtonStyle())
+
+                    Button("Request Details") {
+                        requestMessage(prefill: "")
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
                 }
-                .buttonStyle(PrimaryButtonStyle())
             }
         }
         .padding(Theme.Spacing.md)
@@ -157,6 +165,15 @@ struct ListingDetailView: View {
         .padding(Theme.Spacing.sm)
         .background(Theme.surface)
         .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall, style: .continuous))
+    }
+
+    private func requestMessage(prefill: String) {
+        composePrefill = prefill
+        if session.status == .authenticated {
+            showingCompose = true
+        } else {
+            showingAuth = true
+        }
     }
 
     private func load() async {

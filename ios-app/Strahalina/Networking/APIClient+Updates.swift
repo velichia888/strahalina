@@ -1,14 +1,29 @@
 import Foundation
 
 extension APIClient {
-    func fetchUpdates() async throws -> [Update] {
-        let response: UpdatesResponse = try await send(Endpoint("/updates", requiresAuth: false))
+    /// `category: nil` returns every update (the "All" tab); a specific
+    /// category filters to just that real, admin-tagged set.
+    func fetchUpdates(category: UpdateCategory? = nil) async throws -> [Update] {
+        let response: UpdatesResponse = try await send(Endpoint(
+            "/updates",
+            query: ["category": category?.rawValue],
+            requiresAuth: false
+        ))
         return response.updates
     }
 
-    func createUpdate(body: String, listingId: String?, imageData: Data?, filename: String?, mimeType: String?) async throws -> Update {
-        var fields: [String: String] = ["body": body]
+    func createUpdate(
+        body: String,
+        listingId: String?,
+        category: UpdateCategory = .general,
+        externalVideoUrl: String? = nil,
+        imageData: Data?,
+        filename: String?,
+        mimeType: String?
+    ) async throws -> Update {
+        var fields: [String: String] = ["body": body, "category": category.rawValue]
         if let listingId { fields["listingId"] = listingId }
+        if let externalVideoUrl, !externalVideoUrl.isEmpty { fields["externalVideoUrl"] = externalVideoUrl }
 
         let files: [(fieldName: String, filename: String, mimeType: String, data: Data)]
         if let imageData, let filename, let mimeType {

@@ -65,7 +65,7 @@ struct InboxView: View {
 
         return VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(conversation.listing?.title ?? "Listing")
+                Text(conversation.displayTitle)
                     .font(Theme.Font.body(15).weight(isUnread ? .bold : .regular))
                     .foregroundStyle(Theme.ink)
                 Spacer()

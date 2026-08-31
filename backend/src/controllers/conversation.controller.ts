@@ -6,17 +6,19 @@ import { asyncHandler } from "../utils/asyncHandler";
 
 function serializeConversation(conversation: {
   id: string;
-  listingId: string;
+  kind: string;
+  listingId: string | null;
   buyerId: string;
   createdAt: Date;
   updatedAt: Date;
-  listing?: { id: string; title: string };
+  listing?: { id: string; title: string } | null;
   buyer?: { id: string; displayName: string; email: string };
   messages?: { id: string; body: string; senderId: string; createdAt: Date; readAt: Date | null }[];
 }) {
   const lastMessage = conversation.messages?.[conversation.messages.length - 1];
   return {
     id: conversation.id,
+    kind: conversation.kind,
     listingId: conversation.listingId,
     listing: conversation.listing,
     buyer: conversation.buyer,
@@ -93,7 +95,7 @@ export const startConversation = asyncHandler(async (req: Request, res: Response
 
   const conversation = await prisma.conversation.upsert({
     where: { listingId_buyerId: { listingId: listing.id, buyerId: req.userId! } },
-    create: { listingId: listing.id, buyerId: req.userId! },
+    create: { kind: "listing", listingId: listing.id, buyerId: req.userId! },
     update: {},
   });
 
@@ -102,6 +104,91 @@ export const startConversation = asyncHandler(async (req: Request, res: Response
   });
 
   await prisma.conversation.update({ where: { id: conversation.id }, data: { updatedAt: new Date() } });
+
+  res.status(201).json({ conversation: serializeConversation(conversation), message: serializeMessage(message) });
+});
+
+const consultationSchema = z.object({
+  fullName: z.string().min(1).max(120),
+  email: z.string().email(),
+  phone: z.string().min(1).max(40),
+  message: z.string().min(1).max(2000),
+});
+
+// Mounted at POST /conversations/consultation — the mockup's "Book a
+// Consultation" form. Not a separate data model: composes the
+// structured fields into the first message of a real, general
+// (listingId = null) conversation, reusing the same Conversation/
+// Message system as everything else. Always creates a fresh
+// conversation (unlike the per-listing upsert) since each consultation
+// request is its own episodic ask, not an ongoing thread to merge into.
+export const startConsultation = asyncHandler(async (req: Request, res: Response) => {
+  const body = consultationSchema.parse(req.body);
+
+  const requester = await prisma.user.findUnique({ where: { id: req.userId! } });
+  if (requester?.isAdmin) {
+    throw new HttpError(400, "Admins respond to existing conversations rather than starting new ones");
+  }
+
+  const conversation = await prisma.conversation.create({
+    data: { kind: "consultation", buyerId: req.userId! },
+  });
+
+  const composedBody = [
+    "Consultation Request",
+    "",
+    `Name: ${body.fullName}`,
+    `Email: ${body.email}`,
+    `Phone: ${body.phone}`,
+    "",
+    body.message,
+  ].join("\n");
+
+  const message = await prisma.message.create({
+    data: { conversationId: conversation.id, senderId: req.userId!, body: composedBody },
+  });
+
+  res.status(201).json({ conversation: serializeConversation(conversation), message: serializeMessage(message) });
+});
+
+const investorInquirySchema = z.object({
+  fullName: z.string().min(1).max(120),
+  email: z.string().email(),
+  phone: z.string().min(1).max(40),
+  investmentRange: z.string().min(1).max(60),
+  preferredStrategy: z.string().min(1).max(60),
+  additionalInfo: z.string().max(2000).optional(),
+});
+
+// Mounted at POST /conversations/investor-inquiry — same real
+// Conversation/Message system, different structured fields composed
+// into the opening message.
+export const startInvestorInquiry = asyncHandler(async (req: Request, res: Response) => {
+  const body = investorInquirySchema.parse(req.body);
+
+  const requester = await prisma.user.findUnique({ where: { id: req.userId! } });
+  if (requester?.isAdmin) {
+    throw new HttpError(400, "Admins respond to existing conversations rather than starting new ones");
+  }
+
+  const conversation = await prisma.conversation.create({
+    data: { kind: "investor_inquiry", buyerId: req.userId! },
+  });
+
+  const composedBody = [
+    "Investor Inquiry",
+    "",
+    `Name: ${body.fullName}`,
+    `Email: ${body.email}`,
+    `Phone: ${body.phone}`,
+    `Investment Range: ${body.investmentRange}`,
+    `Preferred Strategy: ${body.preferredStrategy}`,
+    ...(body.additionalInfo ? ["", body.additionalInfo] : []),
+  ].join("\n");
+
+  const message = await prisma.message.create({
+    data: { conversationId: conversation.id, senderId: req.userId!, body: composedBody },
+  });
 
   res.status(201).json({ conversation: serializeConversation(conversation), message: serializeMessage(message) });
 });

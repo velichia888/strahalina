@@ -72,6 +72,10 @@ const listQuerySchema = z.object({
   status: listingStatusEnum.optional(),
   minPriceCents: z.coerce.number().int().nonnegative().optional(),
   maxPriceCents: z.coerce.number().int().positive().optional(),
+  // Substring match against the real, couple-entered location field —
+  // not a curated list of regions, since that would imply coverage
+  // areas the app doesn't actually track.
+  location: z.string().min(1).max(160).optional(),
 });
 
 export const listListings = asyncHandler(async (req: Request, res: Response) => {
@@ -82,6 +86,7 @@ export const listListings = asyncHandler(async (req: Request, res: Response) => 
     // Public browsing defaults to active listings only; an explicit
     // status filter (used by the admin inbox) can still ask for others.
     status: query.status ?? "active",
+    ...(query.location ? { location: { contains: query.location, mode: "insensitive" as const } } : {}),
     ...(query.minPriceCents !== undefined || query.maxPriceCents !== undefined
       ? {
           priceCents: {
