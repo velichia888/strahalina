@@ -1,15 +1,10 @@
-# NOTE: not deployed yet (per this pass's scope) — written for when the
-# user greenlights deployment. Render only allows one free-tier Postgres
-# per account, and myemptycloset-db/carhopping already use it — this
-# databases: block will almost certainly hit that limit. When actually
-# deploying, switch to a free Neon Postgres and sync: false env vars for
-# DATABASE_URL/DIRECT_URL, same workaround used for Car Hopping.
-databases:
-  - name: strahalina-db
-    plan: free
-    databaseName: strahalina
-    user: strahalina
-
+# Render only allows one free-tier Postgres database per account, and
+# myemptycloset-db/carhopping-db already use it — this service uses a
+# free Neon Postgres database instead of Render's own `databases:`
+# provisioning. DATABASE_URL/DIRECT_URL are entered by hand in the
+# Render dashboard (sync: false) from Neon's connection strings (pooled
+# for DATABASE_URL, direct/unpooled for DIRECT_URL — Prisma migrate
+# needs the unpooled one). Same workaround as Car Hopping.
 services:
   - type: web
     name: strahalina-backend
@@ -22,13 +17,9 @@ services:
     autoDeploy: true
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: strahalina-db
-          property: connectionString
+        sync: false
       - key: DIRECT_URL
-        fromDatabase:
-          name: strahalina-db
-          property: connectionString
+        sync: false
       - key: JWT_ACCESS_SECRET
         generateValue: true
       - key: JWT_ACCESS_TTL
