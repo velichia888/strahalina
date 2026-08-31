@@ -24,7 +24,7 @@ struct ProfileView: View {
                     }
                 } else {
                     Section {
-                        Text("Sign in to submit inquiries on listings.")
+                        Text("Sign in to message about listings.")
                             .font(Theme.Font.body(13))
                             .foregroundStyle(Theme.inkSoft)
                         Button("Sign In / Create Account") { showingAuth = true }

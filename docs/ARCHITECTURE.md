@@ -16,15 +16,18 @@
   pairs, e.g. "Cap rate" → "6.2%" — never computed by the server).
 - `ListingPhoto` — ordered photos per listing, via the StorageProvider abstraction.
 - `Update` — dated post by the couple, optional link to a `Listing`, optional photo.
-- `Inquiry` — buyer (User), listing, message, `respondedAt` (nullable, set by admin).
+- `Conversation` — listing, buyer (User), unique on (listingId, buyerId). No "seller"
+  field: listings aren't individually owned, so any admin can access any conversation.
+- `Message` — conversation, sender (User, buyer or any admin), body, `readAt` (nullable).
 
 ## Auth
 
 JWT access (short TTL) + refresh (long TTL, rotates on use) tokens, bcrypt password
 hashing, zod request validation — identical pattern to myemptycloset/Car Hopping.
-`requireAdmin` middleware gates listing/update writes and the inquiry inbox.
-`requireAuth` (any signed-in user) gates inquiry submission. Browsing endpoints are
-public — no auth required.
+`requireAdmin` middleware gates listing/update writes. Conversation access is
+per-conversation: the buyer who owns it, or any admin (see
+`requireAdminOrConversationBuyer` in `conversation.controller.ts`). Browsing endpoints
+are public — no auth required.
 
 ## Storage
 
@@ -36,7 +39,7 @@ S3-compatible in production, HMAC-signed local URLs for dev.
 Mirrors myemptycloset/Car Hopping: `App/`, `Auth/` (Keychain-backed session store),
 `Configuration/`, `Models/`, `Networking/` (actor-based `APIClient`, coalesced
 refresh-and-retry-once-on-401), `Shared/Components/`, `Features/{Auth, Browse,
-ListingDetail, CreateListing, Updates, Inquiries, Profile, Root}`.
+ListingDetail, CreateListing, Updates, Messages, Profile, Root}`.
 
 Known iOS16 pitfalls avoided throughout (burned into every app this session):
 `navigationDestination(item:)` is iOS17+ only (isActive-driven `NavigationLink` instead);
@@ -47,6 +50,5 @@ hand-written `Info.plist` requiring manual `CFBundleExecutable`/`CFBundleIdentif
 
 ## Deferred (Phase 2+)
 
-Stripe Connect or any payment rail, real messaging beyond inquiry-to-inbox, push
-notifications, admin dashboard (optional, non-blocking — same call made for the other
-apps).
+Stripe Connect or any payment rail, push notifications, admin dashboard (optional,
+non-blocking — same call made for the other apps).

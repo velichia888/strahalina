@@ -31,15 +31,16 @@ model User {
   displayName  String
   status       UserStatus @default(active)
   tokenVersion Int        @default(0)
-  /// Gates listing/update writes and the inquiry inbox
+  /// Gates listing/update writes and admin-wide conversation access
   /// (backend/src/middleware/requireAdmin.ts). No signup path can set
   /// this — only ever flipped by prisma/seed.ts's bootstrap, same
   /// pattern as the other apps this session.
   isAdmin      Boolean    @default(false)
   createdAt    DateTime   @default(now())
 
-  inquiries Inquiry[]
-  updates   Update[]
+  conversationsAsBuyer Conversation[]
+  messages             Message[]
+  updates              Update[]
 
   @@map("users")
 }
@@ -59,9 +60,9 @@ model Listing {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  photos    ListingPhoto[]
-  inquiries Inquiry[]
-  updates   Update[]
+  photos        ListingPhoto[]
+  conversations Conversation[]
+  updates       Update[]
 
   @@map("listings")
 }
@@ -91,16 +92,37 @@ model Update {
   @@map("updates")
 }
 
-model Inquiry {
-  id          String    @id @default(uuid())
-  listingId   String
-  listing     Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  buyerId     String
-  buyer       User      @relation(fields: [buyerId], references: [id])
-  message     String
-  respondedAt DateTime?
-  createdAt   DateTime  @default(now())
+// Unlike myemptycloset/Car Hopping (peer-to-peer marketplaces where
+// every listing has one specific seller), Strahalina's listings are
+// jointly managed by the couple via the isAdmin flag, not owned by an
+// individual user. So a Conversation has a specific buyer but no
+// specific "seller" — any admin can see and post to any conversation.
+// See requireAdminOrConversationBuyer in conversation.controller.ts.
+model Conversation {
+  id        String   @id @default(uuid())
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId   String
+  buyer     User     @relation(fields: [buyerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@index([listingId])
-  @@map("inquiries")
+  messages Message[]
+
+  @@unique([listingId, buyerId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  body           String
+  createdAt      DateTime     @default(now())
+  readAt         DateTime?
+
+  @@index([conversationId])
+  @@map("messages")
 }

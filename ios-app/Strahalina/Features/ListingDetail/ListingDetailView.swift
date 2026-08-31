@@ -6,7 +6,8 @@ struct ListingDetailView: View {
     @EnvironmentObject private var session: SessionStore
     @State private var state: LoadState<Listing> = .loading
     @State private var showingAuth = false
-    @State private var showingInquiry = false
+    @State private var showingCompose = false
+    @State private var startedConversation: Conversation?
 
     var body: some View {
         ScrollView {
@@ -25,11 +26,33 @@ struct ListingDetailView: View {
         .sheet(isPresented: $showingAuth) {
             AuthFlowView().environmentObject(session)
         }
-        .sheet(isPresented: $showingInquiry) {
+        .sheet(isPresented: $showingCompose) {
             if case .loaded(let listing) = state {
-                InquiryComposeView(listing: listing).environmentObject(session)
+                MessageComposeView(listing: listing) { conversation in
+                    startedConversation = conversation
+                }
+                .environmentObject(session)
             }
         }
+        .background(conversationNavigationLink)
+    }
+
+    // Programmatic push driven by an optional @State value needs
+    // `navigationDestination(item:)`, which is iOS 17+ only — this
+    // app's deployment target is 16.0, so this uses the older
+    // isActive-driven NavigationLink instead.
+    private var conversationNavigationLink: some View {
+        NavigationLink(
+            destination: Group {
+                if let startedConversation {
+                    ConversationDetailView(conversation: startedConversation).environmentObject(session)
+                }
+            },
+            isActive: Binding(
+                get: { startedConversation != nil },
+                set: { isActive in if !isActive { startedConversation = nil } }
+            )
+        ) { EmptyView() }
     }
 
     @ViewBuilder
@@ -65,14 +88,20 @@ struct ListingDetailView: View {
                 .font(Theme.Font.body(11))
                 .foregroundStyle(Theme.inkFaint)
 
-            Button("Inquire About This Listing") {
-                if session.status == .authenticated {
-                    showingInquiry = true
-                } else {
-                    showingAuth = true
+            // Admins manage every listing jointly rather than owning
+            // this one individually, so "message about this listing"
+            // isn't a real action for them — the backend rejects an
+            // admin trying to start a conversation (400).
+            if session.currentUser?.isAdmin != true {
+                Button("Message About This Listing") {
+                    if session.status == .authenticated {
+                        showingCompose = true
+                    } else {
+                        showingAuth = true
+                    }
                 }
+                .buttonStyle(PrimaryButtonStyle())
             }
-            .buttonStyle(PrimaryButtonStyle())
         }
         .padding(Theme.Spacing.md)
     }

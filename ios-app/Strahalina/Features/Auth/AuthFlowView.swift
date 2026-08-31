@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Only reached when a signed-out visitor tries to submit an inquiry —
+/// Only reached when a signed-out visitor tries to send a message —
 /// public browsing never requires this. Sign in / sign up toggle in one
 /// screen, mirroring the other apps' auth flow structure.
 struct AuthFlowView: View {

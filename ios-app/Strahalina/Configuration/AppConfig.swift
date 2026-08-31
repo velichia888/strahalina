@@ -14,7 +14,7 @@ enum AppConfig {
         static let listingTitleMax = 120
         static let listingDescriptionMax = 4000
         static let updateBodyMax = 2000
-        static let inquiryMessageMax = 2000
+        static let messageBodyMax = 2000
         static let maxPhotosPerListing = 10
     }
 }

@@ -9,7 +9,7 @@ enum SessionStoreError: LocalizedError {
 }
 
 /// Single source of truth for auth/session state. Public browsing
-/// (listings, updates) never needs this — only submitting an inquiry,
+/// (listings, updates) never needs this — only messaging a listing,
 /// or the admin's listing/update-management screens, require a session.
 @MainActor
 final class SessionStore: ObservableObject {

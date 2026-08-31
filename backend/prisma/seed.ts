@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 /**
  * Bootstraps (or promotes) the one admin account this app needs to
- * manage listings/updates and read the inquiry inbox. No public
+ * manage listings/updates and see every buyer conversation. No public
  * admin-signup endpoint exists on purpose — this script, run manually
  * against a real DATABASE_URL, is the only way to create or grant
  * isAdmin.
