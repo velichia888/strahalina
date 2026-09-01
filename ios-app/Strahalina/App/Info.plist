@@ -29,6 +29,26 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 
+	<!--
+	Normally auto-injected by Xcode alongside the other GENERATE_INFOPLIST_FILE
+	keys above. Without it, App Store Connect rejects the upload outright:
+	"Missing Info.plist value. A value for the Info.plist key
+	'CFBundleIconName' is missing" (error 90713).
+	-->
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+
+	<!--
+	Without this, App Store Connect's server-side validation demands a
+	152x152 iPad icon even though TARGETED_DEVICE_FAMILY "1" already
+	declares this app iPhone-only — error 90023, "Missing required icon
+	file ... for iPad".
+	-->
+	<key>UIDeviceFamily</key>
+	<array>
+		<integer>1</integer>
+	</array>
+
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
