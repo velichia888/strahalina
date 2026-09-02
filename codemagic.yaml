@@ -34,12 +34,6 @@ workflows:
 
       - name: Launch app in cloud simulator
         script: |
-          # NOTE: not deployed yet — this curl pre-warm and autologin
-          # step will fail until strahalina-backend actually exists on
-          # Render and IOS_TEST_EMAIL/IOS_TEST_PASSWORD (the ios_test env
-          # var group) point at a real seeded account there. Left in
-          # place, matching the other apps' proven pattern, for when
-          # deployment happens.
           echo "Waking backend..."
           curl -fsS --retry 10 --retry-delay 6 --max-time 90 \
             https://strahalina-backend.onrender.com/health >/dev/null
@@ -100,6 +94,7 @@ workflows:
             "$CM_BUILD_DIR/simulator-artifacts/strahalina-launch.png"
 
           kill "$LAUNCH_PID" 2>/dev/null || true
+
           echo "--- app console log ---"
           cat "$LOGFILE" || true
 
@@ -107,6 +102,7 @@ workflows:
       - $CM_BUILD_DIR/derived-data/Build/Products/Debug-iphonesimulator/Strahalina.app
       - $CM_BUILD_DIR/simulator-artifacts/**
       - /tmp/xcodebuild_logs/*.log
+
 
   ios-device-unsigned:
     name: Strahalina Device (unsigned, for sideloading)
@@ -144,8 +140,10 @@ workflows:
         script: |
           APP_PATH="$CM_BUILD_DIR/derived-data/Build/Products/Debug-iphoneos/Strahalina.app"
           PAYLOAD_DIR="$CM_BUILD_DIR/Payload"
+
           mkdir -p "$PAYLOAD_DIR"
           cp -R "$APP_PATH" "$PAYLOAD_DIR/"
+
           cd "$CM_BUILD_DIR"
           zip -r Strahalina-unsigned.ipa Payload
 
@@ -153,7 +151,8 @@ workflows:
       - $CM_BUILD_DIR/Strahalina-unsigned.ipa
       - /tmp/xcodebuild_logs/*.log
 
-        ios-appstore:
+
+  ios-appstore:
     name: Strahalina App Store
     instance_type: mac_mini_m2
     max_build_duration: 60
