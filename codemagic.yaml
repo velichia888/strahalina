@@ -103,6 +103,7 @@ workflows:
       - $CM_BUILD_DIR/simulator-artifacts/**
       - /tmp/xcodebuild_logs/*.log
 
+
   ios-device-unsigned:
     name: Strahalina Device (unsigned, for sideloading)
     instance_type: mac_mini_m2
@@ -150,6 +151,7 @@ workflows:
       - $CM_BUILD_DIR/Strahalina-unsigned.ipa
       - /tmp/xcodebuild_logs/*.log
 
+
   ios-appstore:
     name: Strahalina App Store
     instance_type: mac_mini_m2
@@ -173,6 +175,120 @@ workflows:
       - name: Generate Xcode project
         script: |
           xcodegen generate --spec project.yml
+
+      - name: Restore and validate App Store Connect API key
+        script: |
+          python3 - <<'PY'
+          import os
+          import base64
+          import subprocess
+          from pathlib import Path
+
+          encoded = os.environ.get(
+              "APP_STORE_CONNECT_PRIVATE_KEY_B64",
+              ""
+          ).strip()
+
+          if not encoded:
+              raise SystemExit(
+                  "APP_STORE_CONNECT_PRIVATE_KEY_B64 is missing"
+              )
+
+          try:
+              key_bytes = base64.b64decode(
+                  encoded,
+                  validate=True
+              )
+          except Exception as exc:
+              raise SystemExit(
+                  f"APP_STORE_CONNECT_PRIVATE_KEY_B64 is not valid base64: {exc}"
+              )
+
+          try:
+              key_text = key_bytes.decode("utf-8").strip()
+          except UnicodeDecodeError:
+              raise SystemExit(
+                  "Decoded App Store Connect key is not UTF-8 text"
+              )
+
+          if not key_text.startswith(
+              "-----BEGIN PRIVATE KEY-----"
+          ):
+              raise SystemExit(
+                  "Decoded key is missing BEGIN PRIVATE KEY header"
+              )
+
+          if not key_text.endswith(
+              "-----END PRIVATE KEY-----"
+          ):
+              raise SystemExit(
+                  "Decoded key is missing END PRIVATE KEY footer"
+              )
+
+          key_path = Path(
+              os.environ["CM_BUILD_DIR"]
+          ) / "AuthKey.p8"
+
+          key_path.write_text(
+              key_text + "\n",
+              encoding="utf-8"
+          )
+
+          try:
+              subprocess.run(
+                  [
+                      "openssl",
+                      "pkey",
+                      "-in",
+                      str(key_path),
+                      "-noout",
+                  ],
+                  check=True,
+                  stdout=subprocess.DEVNULL,
+                  stderr=subprocess.DEVNULL,
+              )
+          except subprocess.CalledProcessError:
+              raise SystemExit(
+                  "Decoded App Store Connect API key failed OpenSSL validation"
+              )
+
+          cm_env = os.environ["CM_ENV"]
+
+          with open(cm_env, "a", encoding="utf-8") as env:
+              env.write(
+                  "APP_STORE_CONNECT_PRIVATE_KEY<<CODEMAGIC_P8\n"
+              )
+              env.write(key_text + "\n")
+              env.write("CODEMAGIC_P8\n")
+
+          print(
+              "App Store Connect API key restored and validated successfully"
+          )
+          PY
+
+      - name: Verify App Store Connect credentials are present
+        script: |
+          test -n "$APP_STORE_CONNECT_KEY_IDENTIFIER" || {
+            echo "APP_STORE_CONNECT_KEY_IDENTIFIER is missing"
+            exit 1
+          }
+
+          test -n "$APP_STORE_CONNECT_ISSUER_ID" || {
+            echo "APP_STORE_CONNECT_ISSUER_ID is missing"
+            exit 1
+          }
+
+          test -n "$APP_STORE_CONNECT_PRIVATE_KEY" || {
+            echo "APP_STORE_CONNECT_PRIVATE_KEY was not restored"
+            exit 1
+          }
+
+          test -n "$CERTIFICATE_PRIVATE_KEY" || {
+            echo "CERTIFICATE_PRIVATE_KEY is missing"
+            exit 1
+          }
+
+          echo "All required App Store signing variables are present"
 
       - name: Initialize signing keychain
         script: |
