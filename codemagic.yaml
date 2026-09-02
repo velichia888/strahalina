@@ -176,6 +176,17 @@ workflows:
         script: |
           xcodegen generate --spec project.yml
 
+      - name: Increment build number
+        script: |
+          # project.yml hardcodes CURRENT_PROJECT_VERSION: 1, so every
+          # archive without this step produces the same bundle version -
+          # the second successful App Store upload then fails with
+          # "The bundle version must be higher than the previously
+          # uploaded version" (409, ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE).
+          # A Unix timestamp needs no lookup against App Store Connect
+          # and is guaranteed strictly increasing across builds.
+          agvtool new-version -all $(date +%s)
+
       - name: Restore and validate App Store Connect API key
         script: |
           python3 - <<'PY'
