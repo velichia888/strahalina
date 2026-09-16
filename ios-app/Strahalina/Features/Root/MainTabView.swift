@@ -65,20 +65,34 @@ struct MainTabView: View {
                 waited += 0.2
             }
 
+            // CI polls the log once a second, so a marker must stay true
+            // for a real stretch of wall-clock time or the poll can miss
+            // the window entirely. Printing a marker and switching tabs
+            // in the same tick (no await between them) left a
+            // zero-duration window - by the time CI's poll caught the
+            // marker in the log, the app had already moved to the next
+            // tab, so every screenshot landed one tab ahead again even
+            // after fixing the cross-task ordering above. Lingering after
+            // each print, before switching, gives the poll a real window
+            // to land in.
             try? await Task.sleep(nanoseconds: 1_500_000_000)
             print("IOS_TEST_TAB_HOME")
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
 
             selection = 1
             try? await Task.sleep(nanoseconds: 2_500_000_000)
             print("IOS_TEST_TAB_BROWSE")
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
 
             selection = 2
             try? await Task.sleep(nanoseconds: 2_500_000_000)
             print("IOS_TEST_TAB_UPDATES")
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
 
             selection = session.status == .authenticated ? 3 : 5
             try? await Task.sleep(nanoseconds: 2_500_000_000)
             print(session.status == .authenticated ? "IOS_TEST_TAB_MESSAGES" : "IOS_TEST_TAB_PROFILE")
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
         }
         #endif
     }
