@@ -47,7 +47,25 @@ struct MainTabView: View {
             // guessing sleep durations against variable data-load timing.
             guard ProcessInfo.processInfo.environment["IOS_TEST_AUTOMATION"] == "1" else { return }
 
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            // This task starts as soon as MainTabView first appears, which
+            // happens right after restoreSession() resolves (fast, no
+            // stored session in CI) - well before StrahalinaApp's separate
+            // autologin .task actually finishes its network call. A fixed
+            // sleep here raced that: CI's own wait for
+            // IOS_TEST_AUTOLOGIN_SUCCESS routinely took longer than this
+            // sleep, so by the time CI checked for IOS_TEST_TAB_HOME the
+            // marker had already been printed (and superseded by a later
+            // selection change) seconds earlier - every screenshot landed
+            // one tab ahead of its own marker. Waiting for login to
+            // actually settle first anchors the tour to when it really
+            // happens instead of a guess from launch.
+            var waited = 0.0
+            while session.status == .unauthenticated && waited < 15 {
+                try? await Task.sleep(nanoseconds: 200_000_000)
+                waited += 0.2
+            }
+
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
             print("IOS_TEST_TAB_HOME")
 
             selection = 1
