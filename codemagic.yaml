@@ -36,7 +36,7 @@ workflows:
         script: |
           echo "Waking backend..."
           curl -fsS --retry 10 --retry-delay 6 --max-time 90 \
-            https://strahalina-backend.onrender.com/health >/dev/null
+            https://strahalina-backend-2tpe.onrender.com/health >/dev/null
 
           DEVICE_ID=$(xcrun simctl list devices available -j | \
             ruby -rjson -e '
@@ -70,28 +70,41 @@ workflows:
               > "$LOGFILE" 2>&1 &
           LAUNCH_PID=$!
 
-          waited=0
-          until grep -q "IOS_TEST_APP_LAUNCHED" "$LOGFILE" 2>/dev/null; do
-            sleep 1
-            waited=$((waited + 1))
-            if [ "$waited" -ge 45 ]; then
-              echo "Timed out waiting for IOS_TEST_APP_LAUNCHED after ${waited}s"
-              break
-            fi
-          done
+          wait_for_marker() {
+            local pattern="$1"
+            local timeout="$2"
+            local waited=0
+            until grep -qE "$pattern" "$LOGFILE" 2>/dev/null; do
+              sleep 1
+              waited=$((waited + 1))
+              if [ "$waited" -ge "$timeout" ]; then
+                echo "Timed out waiting for '$pattern' after ${waited}s"
+                break
+              fi
+            done
+          }
 
-          waited=0
-          until grep -qE "IOS_TEST_AUTOLOGIN_(SUCCESS|FAILED)" "$LOGFILE" 2>/dev/null; do
-            sleep 1
-            waited=$((waited + 1))
-            if [ "$waited" -ge 60 ]; then
-              echo "Timed out waiting for autologin result after ${waited}s"
-              break
-            fi
-          done
+          wait_for_marker "IOS_TEST_APP_LAUNCHED" 45
+          wait_for_marker "IOS_TEST_AUTOLOGIN_(SUCCESS|FAILED)" 60
 
+          # Each tab prints its own marker (see MainTabView's automation
+          # task) once selected, so these screenshots land on the actual
+          # tab rather than racing fixed sleeps against data-load timing.
+          wait_for_marker "IOS_TEST_TAB_HOME" 15
           xcrun simctl io "$DEVICE_ID" screenshot \
-            "$CM_BUILD_DIR/simulator-artifacts/strahalina-launch.png"
+            "$CM_BUILD_DIR/simulator-artifacts/01_home.png"
+
+          wait_for_marker "IOS_TEST_TAB_BROWSE" 15
+          xcrun simctl io "$DEVICE_ID" screenshot \
+            "$CM_BUILD_DIR/simulator-artifacts/02_browse.png"
+
+          wait_for_marker "IOS_TEST_TAB_UPDATES" 15
+          xcrun simctl io "$DEVICE_ID" screenshot \
+            "$CM_BUILD_DIR/simulator-artifacts/03_updates.png"
+
+          wait_for_marker "IOS_TEST_TAB_(MESSAGES|PROFILE)" 15
+          xcrun simctl io "$DEVICE_ID" screenshot \
+            "$CM_BUILD_DIR/simulator-artifacts/04_final.png"
 
           kill "$LAUNCH_PID" 2>/dev/null || true
 
