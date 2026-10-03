@@ -77,7 +77,7 @@ struct ProfileView: View {
     }
 } message: {
     Text("This permanently deletes your Strahalina account and associated account data, including your conversations and messages. This action cannot be undone.")
-}
+
     }
 .alert(
     "Unable to Delete Account",
