@@ -78,6 +78,14 @@ final class SessionStore: ObservableObject {
         status = .unauthenticated
     }
 
+        func deleteAccount() async throws {
+        try await apiClient.deleteAccount()
+        sessionGeneration &+= 1
+        clearStoredSession()
+        status = .unauthenticated
+        sessionMessage = nil
+    }
+
     func clearSessionMessage() {
         sessionMessage = nil
     }

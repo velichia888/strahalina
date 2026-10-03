@@ -4,7 +4,9 @@ struct ProfileView: View {
     @EnvironmentObject private var session: SessionStore
     @State private var showingAuth = false
     @State private var showingChangePassword = false
-
+@State private var showingDeleteConfirmation = false
+@State private var isDeletingAccount = false
+@State private var deleteAccountError: Error?
     var body: some View {
         NavigationStack {
             List {
@@ -21,7 +23,18 @@ struct ProfileView: View {
                     }
                     Section {
                         NavigationLink("About Strahalina") { AboutView() }
-                    }
+                    }Section {
+    Button(role: .destructive) {
+        showingDeleteConfirmation = true
+    } label: {
+        if isDeletingAccount {
+            ProgressView()
+        } else {
+            Text("Delete Account")
+        }
+    }
+    .disabled(isDeletingAccount)
+}
                     Section {
                         Button(role: .destructive) { session.logout() } label: { Text("Sign Out") }
                     }
@@ -44,8 +57,39 @@ struct ProfileView: View {
             .sheet(isPresented: $showingChangePassword) {
                 ChangePasswordSheet().environmentObject(session)
             }
+        }.alert("Delete Account?", isPresented: $showingDeleteConfirmation) {
+    Button("Cancel", role: .cancel) {}
+
+    Button("Delete Account", role: .destructive) {
+        Task {
+            isDeletingAccount = true
+            deleteAccountError = nil
+
+            do {
+                try await session.deleteAccount()
+            } catch {
+                deleteAccountError = error
+            }
+
+            isDeletingAccount = false
         }
     }
+} message: {
+    Text("This permanently deletes your Strahalina account and associated account data, including your conversations and messages. This action cannot be undone.")
+}
+    }
+}.alert(
+    "Unable to Delete Account",
+    isPresented: Binding(
+        get: { deleteAccountError != nil },
+        set: { if !$0 { deleteAccountError = nil } }
+    )
+) {
+    Button("OK", role: .cancel) {
+        deleteAccountError = nil
+    }
+} message: {
+    Text(deleteAccountError?.localizedDescription ?? "Please try again.")
 }
 
 private struct ChangePasswordSheet: View {

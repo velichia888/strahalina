@@ -5,7 +5,7 @@ import { HttpError } from "../utils/HttpError";
 import { hashPassword, comparePassword } from "../utils/password";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/jwt";
 import { asyncHandler } from "../utils/asyncHandler";
-
+import { getStorageProvider } from "../storage";
 function toPublicUser(user: {
   id: string;
   email: string;
@@ -131,5 +131,57 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
     where: { id: req.userId },
     data: { tokenVersion: { increment: 1 } },
   });
+  res.status(204).send();
+});
+
+export const deleteAccount = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.userId;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      updates: {
+        select: {
+          photoStorageKey: true,
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    throw new HttpError(404, "User not found");
+  }
+
+  const storage = getStorageProvider();
+
+  for (const update of user.updates) {
+    if (update.photoStorageKey) {
+      await storage.delete(update.photoStorageKey);
+    }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    // Removing conversations owned by this user also removes their
+    // conversation messages through the existing cascade relationship.
+    await tx.conversation.deleteMany({
+      where: { buyerId: userId },
+    });
+
+    // Admin users may have authored messages in conversations owned by
+    // other users, so remove any remaining messages authored by this user.
+    await tx.message.deleteMany({
+      where: { senderId: userId },
+    });
+
+    await tx.update.deleteMany({
+      where: { authorId: userId },
+    });
+
+    await tx.user.delete({
+      where: { id: userId },
+    });
+  });
+
   res.status(204).send();
 });
