@@ -93,6 +93,7 @@ struct ProfileView: View {
     Text(deleteAccountError?.localizedDescription ?? "Please try again.")
 }
     }
+}
 private struct ChangePasswordSheet: View {
     @EnvironmentObject private var session: SessionStore
     @Environment(\.dismiss) private var dismiss
