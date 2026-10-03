@@ -30,4 +30,6 @@ extension APIClient {
     func logout(accessToken: String) async throws {
         try await sendNoContent(Endpoint("/auth/logout", method: .post, overrideBearerToken: accessToken))
     }
+func deleteAccount() async throws {
+    try await sendNoContent(Endpoint("/auth/account", method: .delete))
 }
