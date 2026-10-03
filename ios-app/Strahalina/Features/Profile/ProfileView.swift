@@ -23,7 +23,8 @@ struct ProfileView: View {
                     }
                     Section {
                         NavigationLink("About Strahalina") { AboutView() }
-                    }Section {
+                    }
+                    Section {
     Button(role: .destructive) {
         showingDeleteConfirmation = true
     } label: {
@@ -78,7 +79,7 @@ struct ProfileView: View {
     Text("This permanently deletes your Strahalina account and associated account data, including your conversations and messages. This action cannot be undone.")
 }
     }
-}.alert(
+.alert(
     "Unable to Delete Account",
     isPresented: Binding(
         get: { deleteAccountError != nil },
